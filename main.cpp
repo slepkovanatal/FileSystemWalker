@@ -16,6 +16,12 @@ void roundDirectory(std::filesystem::path const &dir)
     }
 }
 
+std::filesystem::path getChild(char *str_path)
+{
+    std::filesystem::path path(str_path);
+    return begin(std::filesystem::directory_iterator{path})->path();
+}
+
 
 int main(int argc, char *argv[]) {
     assert(1 < argc);
@@ -33,5 +39,11 @@ int main(int argc, char *argv[]) {
 //    }
 
     DirectoryRound round(cur_dir);
+//    sleep(10000);
+//    auto child = getChild(argv[1]);
+//    for (const auto &it: std::filesystem::directory_iterator{child}) {
+//        std::cout << it.path() << "\n";
+//    }
+//    std::cout << child.string();
     return 0;
 }

@@ -11,7 +11,7 @@ class DirectoryRound
 public:
     explicit DirectoryRound(std::filesystem::path const &dir);
 
-    void round(const std::filesystem::path &dir);
+    void round(std::filesystem::path dir);
 
     ~DirectoryRound();
 
@@ -19,6 +19,7 @@ private:
     ThreadPool pool;
     std::vector<std::future<void>> futures;
     std::mutex m;
+    std::atomic<int> processed_dirs;
 };
 
 #endif //FILESYSTEMROUND_DIRECTORYROUND_H
