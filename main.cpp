@@ -24,8 +24,9 @@ std::filesystem::path getChild(char *str_path)
 
 
 int main(int argc, char *argv[]) {
-    assert(1 < argc);
-    std::filesystem::path cur_dir = argv[1];
+//    for (int i = 0; i < 1000; i++) {
+        assert(1 < argc);
+        std::filesystem::path cur_dir = argv[1];
 //    std::cout << "Current root name is: " << std::filesystem::current_path().root_name() << '\n';
 
 //    ThreadPool pool(2);
@@ -38,12 +39,13 @@ int main(int argc, char *argv[]) {
 //        f.wait();
 //    }
 
-    DirectoryRound round(cur_dir);
+        DirectoryRound round(cur_dir);
 //    sleep(10000);
 //    auto child = getChild(argv[1]);
 //    for (const auto &it: std::filesystem::directory_iterator{child}) {
 //        std::cout << it.path() << "\n";
 //    }
 //    std::cout << child.string();
+//    }
     return 0;
 }

@@ -6,7 +6,7 @@
 
 
 DirectoryRound::DirectoryRound(const std::filesystem::path &dir):
-    pool(5),
+    pool(16),
     processed_dirs(0)
 {
     std::lock_guard<std::mutex> lock(m);
@@ -29,7 +29,11 @@ void DirectoryRound::round(std::filesystem::path dir) {
             }
         }
         std::cout << "end\n";
-        ++processed_dirs;
+        {
+            std::lock_guard<std::mutex> lock(m);
+            ++processed_dirs;
+        }
+        cv.notify_all();
     } catch (std::exception const &e) {
         std::cout << e.what() << '\n';
     }
@@ -38,13 +42,22 @@ void DirectoryRound::round(std::filesystem::path dir) {
 
 DirectoryRound::~DirectoryRound()
 {
-    while (true) {
-        std::lock_guard<std::mutex> lock(m);
-        std::cout << processed_dirs << ' ' << futures.size() << "\n";
-        if (processed_dirs == futures.size()) {
-            break;
-        }
-    }
+//    while (true) {
+        std::unique_lock<std::mutex> lock(m);
+        cv.wait(lock, [this]() -> bool {
+            auto result = processed_dirs == futures.size();
+            std::cout << processed_dirs << ' ' << futures.size() << " " << result << " " << std::this_thread::get_id() << "\n";
+//            std::cout << processed_dirs << ' ' << futures.size() << " " <<  result << "\n";
+            return result;
+        });
+
+//        if (processed_dirs == futures.size()) {
+//            lock.unlock();
+//            break;
+//        }
+        lock.unlock();
+        std::cout << "finish";
+//    }
 //    m.lock();
 //    for (auto &future: futures) {
 //        m.unlock();
