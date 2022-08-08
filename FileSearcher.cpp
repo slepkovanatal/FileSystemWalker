@@ -3,6 +3,7 @@
 #include <queue>
 #include <fstream>
 #include <cassert>
+#include <iostream>
 
 
 FileSearcher::FileSearcher(const std::filesystem::path &file):
@@ -12,40 +13,46 @@ FileSearcher::FileSearcher(const std::filesystem::path &file):
 
 
 bool FileSearcher::search(const std::string &s) {
-    const int s_hash = polynomialHashCode(s);
-    std::ifstream fileStream(file, std::ios::in);
+    const long long s_hash = polynomialHashCode(s);
+    std::ifstream fileStream(file);
     char buffer[s.size()];
+    fileStream.read(buffer, s.size());
     std::queue<char> q;
     for (char c: buffer) {
         q.push(c);
     }
-    fileStream.read(buffer, sizeof(buffer));
-    int buf_hash = polynomialHashCode(buffer);
+    long long buf_hash = polynomialHashCode(std::string(buffer, s.size()));
+    computePPow(s.size() - 1);
     while (buf_hash != s_hash && fileStream.peek() != EOF) {
-        char cur_char;
-        fileStream >> cur_char;
-        q.push(cur_char);
-        buf_hash = updateHash(q.front(), q.back(), buf_hash);
+        char buff[1];
+        fileStream.read(buff, 1);
+        q.push(buff[0]);
+        buf_hash = updateHash(int(q.front()), int(q.back()), buf_hash);
         q.pop();
     }
     return buf_hash == s_hash;
 }
 
 
-int FileSearcher::polynomialHashCode(const std::string &s) {
-    p_pow = 1;
-    int hash = 0;
+long long FileSearcher::polynomialHashCode(const std::string &s) {
+    long long hash = 0;
     for (char c: s) {
-        hash = (hash + int(c) * p_pow) % m;
-        p_pow = (p_pow * p) % m;
+        hash = ((hash * p) % m + int(c)) % m;
     }
     return hash;
 }
 
 
-int FileSearcher::updateHash(int firstChar, int lastChar, int prev_hash) {
-    assert((prev_hash - firstChar) % p == 0);
-    prev_hash = (prev_hash - firstChar) / p;
-    prev_hash = (prev_hash + lastChar * p_pow) % m;
+long long FileSearcher::updateHash(long long firstChar, long long lastChar, long long prev_hash) {
+    prev_hash = (prev_hash - (firstChar * p_pow) % m + m) % m;
+    prev_hash = ((prev_hash * p) % m + lastChar) % m;
     return prev_hash;
+}
+
+
+void FileSearcher::computePPow(int n) {
+    p_pow = 1;
+    for (size_t i = 0; i < n; ++i) {
+        p_pow = (p_pow * p) % m;
+    }
 }

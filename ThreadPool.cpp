@@ -2,6 +2,7 @@
 
 #include <future>
 
+
 ThreadPool::ThreadPool(size_t threadCount):
     quite(false)
 {

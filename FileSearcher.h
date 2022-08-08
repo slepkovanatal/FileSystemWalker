@@ -12,17 +12,19 @@ public:
     bool search(const std::string &s);
 
 private:
-    int polynomialHashCode(const std::string &s);
+    long long polynomialHashCode(const std::string &s);
 
-    int updateHash(int firstChar, int lastChar, int prev_hash);
+    long long updateHash(long long firstChar, long long lastChar, long long prev_hash);
+
+    void computePPow(int n);
 
 private:
-    const int m = 1e9 + 7;
-    const int p = 31;
+    const long long m = 1e9 + 7;
+    const long long p = 31;
 
 private:
     std::filesystem::path file;
-    int p_pow;
+    long long p_pow;
 };
 
 
