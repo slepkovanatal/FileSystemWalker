@@ -35,7 +35,6 @@ int main(int argc, char *argv[]) {
         }
     });
 
-    std::cout << "----------------" << '\n';
     auto res = walker.getResults();
     for (auto &p: res) {
         if (p.second) {
