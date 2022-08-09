@@ -26,15 +26,21 @@ int main(int argc, char *argv[]) {
     assert(1 < argc);
     std::filesystem::path cur_dir = argv[1];
 
-    DirectoryWalker round(cur_dir, [](std::filesystem::path file) {
+    DirectoryWalker<bool> walker(cur_dir, [](std::promise<bool> &&p, std::filesystem::path file) {
         try {
             FileSearcher fileSearcher(file);
-            if (fileSearcher.search("v -0.609689 -0.067739 0.098931")) {
-                std::cout << "SUCCESS\n";
-            }
+            p.set_value(fileSearcher.search("v -0.609689 -0.067739 0.098931"));
         } catch (const std::exception &e) {
-            std::cout << e.what() << "\n";
+            p.set_exception(std::make_exception_ptr(e));
         }
     });
+
+    std::cout << "----------------" << '\n';
+    auto res = walker.getResults();
+    for (auto &p: res) {
+        if (p.second) {
+            std::cout << p.first << '\n';
+        }
+    }
     return 0;
 }

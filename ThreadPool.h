@@ -16,6 +16,7 @@ public:
                 std::function<void()> task);
 
     ~ThreadPool();
+
 private:
     void run();
 
