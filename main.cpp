@@ -1,6 +1,5 @@
 #include "ThreadPool.h"
-#include "DirectoryWalker.h"
-#include "FileSearcher.h"
+#include "FileSystemSearcher.h"
 
 #include <iostream>
 #include <filesystem>
@@ -23,22 +22,17 @@ std::filesystem::path getChild(char *str_path)
 
 
 int main(int argc, char *argv[]) {
-    assert(1 < argc);
-    std::filesystem::path cur_dir = argv[1];
+    for (int i = 0; i < 1000; i++) {
+        assert(1 < argc);
+        std::filesystem::path cur_dir = argv[1];
 
-    DirectoryWalker<bool> walker(cur_dir, [](std::promise<bool> &&p, std::filesystem::path file) {
-        try {
-            FileSearcher fileSearcher(file);
-            p.set_value(fileSearcher.search("v -0.609689 -0.067739 0.098931"));
-        } catch (const std::exception &e) {
-            p.set_exception(std::make_exception_ptr(e));
-        }
-    });
+        Consumer consumer;
+        FileSystemSearcher fs_searcher("C:\\Users\\Nata\\Documents\\scull_MultiView_test\\", consumer);
+        std::future<void> future = fs_searcher.doSearch();
 
-    auto res = walker.getResults();
-    for (auto &p: res) {
-        if (p.second) {
-            std::cout << p.first << '\n';
+        future.get();
+        for (auto &file: consumer.getResults()) {
+            std::cout << file << '\n';
         }
     }
     return 0;
