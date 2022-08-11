@@ -30,7 +30,11 @@ int main(int argc, char *argv[]) {
         FileSystemSearcher fs_searcher("C:\\Users\\Nata\\Documents\\scull_MultiView_test\\", consumer);
         std::future<void> future = fs_searcher.doSearch();
 
-        future.get();
+        try {
+            future.get();
+        } catch (std::exception &e) {
+            std::cout << e.what() << "\n";
+        }
         for (auto &file: consumer.getResults()) {
             std::cout << file << '\n';
         }

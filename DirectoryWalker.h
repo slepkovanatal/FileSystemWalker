@@ -3,9 +3,17 @@
 
 #include "ThreadPool.h"
 #include "Consumer.h"
+#include "FileSearchException.h"
 
 #include <filesystem>
 #include <iostream>
+
+
+class err : public std::exception
+{
+public:
+    const char* what() const noexcept { return "error"; }
+};
 
 
 template<typename T>
@@ -21,6 +29,8 @@ public:
 private:
     void walk(std::filesystem::path dir);
 
+    void checkEndCondition();
+
 private:
     std::filesystem::path start_dir;
     ThreadPool pool;
@@ -31,6 +41,7 @@ private:
     int completed_tasks;
     int files_count;
     std::promise<void> promise;
+    std::vector<std::exception_ptr> exceptions;
 };
 
 
@@ -63,15 +74,15 @@ void DirectoryWalker<T>::walk(std::filesystem::path dir) {
             try {
                 func(dir);
             } catch (std::exception &e) {
-                std::current_exception();
+                std::lock_guard<std::mutex> lock(m);
+                exceptions.push_back(std::current_exception());
             }
 
-            std::lock_guard<std::mutex> lock(m);
-            ++completed_tasks;
-            if (visited_fs_objects == processed_dirs &&
-                    files_count == completed_tasks) {
-                promise.set_value();
+            {
+                std::lock_guard<std::mutex> lock(m);
+                ++completed_tasks;
             }
+            checkEndCondition();
         });
     }
 
@@ -87,19 +98,31 @@ void DirectoryWalker<T>::walk(std::filesystem::path dir) {
         }
     }
 
-    std::lock_guard<std::mutex> lock(m);
-    ++processed_dirs;
-
-    if (visited_fs_objects == processed_dirs &&
-        files_count == completed_tasks) {
-        promise.set_value();
+    {
+        std::lock_guard<std::mutex> lock(m);
+        ++processed_dirs;
     }
+    checkEndCondition();
 }
 
 
 template<typename T>
 std::future<void> DirectoryWalker<T>::getResults() {
     return promise.get_future();
+}
+
+
+template<typename T>
+void DirectoryWalker<T>::checkEndCondition() {
+    std::lock_guard<std::mutex> lock(m);
+    if (visited_fs_objects == processed_dirs &&
+            files_count == completed_tasks) {
+        if (exceptions.empty()) {
+            promise.set_value();
+        } else {
+            promise.set_exception(std::make_exception_ptr(FileSearchException(exceptions)));
+        }
+    }
 }
 
 #endif //FILESYSTEMROUND_DIRECTORYWALKER_H
